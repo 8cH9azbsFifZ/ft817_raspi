@@ -1,5 +1,7 @@
 #!/usr/bin/perl -I/opt/local/lib/perl5//vendor_perl/5.12.4/darwin-thread-multi-2level/
 use IO::Socket;
+use XML::Simple;
+use Data::Dumper;
 
 sub init_rig ()
 {
@@ -56,6 +58,8 @@ sub display_text ()
 	printf "%03d.%03d.%03d Hz\nMode: $rig{mode}\nChannel: $channel\nBand: $band\nLocator: $locator", $mhz, $khz, $hz;
 }
 
+
+
 sub maidenhead_to_wgs () { }
 sub wgs_to_maidenhead () { }
 sub read_gps () {}
@@ -74,3 +78,15 @@ $rig{freq}=439325000;
 display_text();
 
 
+sub read_bandplan ()
+{
+	$filename="bandplan.xml";
+	$xml = new XML::Simple;
+	$data = $xml->XMLin($filename);
+	my %B = %{$data->{band}};
+	foreach my $b (keys %B)
+	{
+		print "$B{$b}{min} $B{$b}{max} $B{$b}{name}\n";
+		print Dumper $B{$b};
+	}
+}
