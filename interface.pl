@@ -146,7 +146,7 @@ $l_locator->set_alignment(0.0,0.5);
 
 my $bluel = Gtk2::Gdk::Color->new (0,0xCCCC,0xFFFF);
 $window->show_all();
- 
+#$window->fullscreen; 
 Gtk2->main;
 
 
