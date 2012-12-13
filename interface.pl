@@ -74,6 +74,8 @@ sub read_rotary () {}
 
 
 $rig{freq}=439325000;
+$rig{mode}="FM";
+$locator="JO54el";
 #read_rig();
 display_text();
 
@@ -90,3 +92,61 @@ sub read_bandplan ()
 		print Dumper $B{$b};
 	}
 }
+
+
+
+
+use Gtk2;      
+use Glib;
+
+Gtk2->init;
+ 
+my $window = Gtk2::Window->new;
+my $l_freq = Gtk2::Label->new($rig{freq});
+my $l_mode = Gtk2::Label->new($rig{mode});
+my $l_channel = Gtk2::Label->new($channel);
+my $l_band = Gtk2::Label->new($band);
+my $l_locator = Gtk2::Label->new($locator);
+#my $widget = Gtk2::HBox->new ($homogeneous=0, $spacing=5) ;
+my $button1 = Gtk2::Button->new('Button 1');
+my $button2 = Gtk2::Button->new('Button 2');
+
+#$button = Gtk2::Button->new("Gtk2::HBox::pack");
+#$widget->pack_start($button, $expand, $fill, $padding);
+#$button->show;
+
+ 
+$window->signal_connect('delete-event' => sub { Gtk2->main_quit });
+ 
+#$window->add($label);
+ 
+#my $box = Gtk2::HBox->new();
+#$box->add($button1);
+#$box->add($button2);
+#$box->add($l_freq);
+#$box->add($l_mode);
+#$window->add($box);
+
+#my $box1 = Gtk2::HBox->new();
+#$box1->add($l_band);
+#$box1->add($l_channel);
+#$window->add($box1);
+
+$window->set_border_width(30);
+$window->set_title("Combiner");
+
+$table = Gtk2::Table->new(2, 2, TRUE);
+$window->add($table);
+$table->attach_defaults($l_freq, 0, 1, 0, 1);
+$table->attach_defaults($l_mode, 1, 2, 0, 1);
+$table->attach_defaults($l_locator, 0, 2, 1, 2);
+$l_freq->show;
+$table->show;
+
+
+$window->show_all();
+ 
+Gtk2->main;
+
+
+
