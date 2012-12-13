@@ -114,9 +114,17 @@ my $button2 = Gtk2::Button->new('Button 2');
 
  
 $window->signal_connect('delete-event' => sub { Gtk2->main_quit });
- 
+my $font     = Gtk2::Pango::FontDescription->from_string("Sans Bold 18 ");
+$l_freq->modify_font($font);
+$l_mode->modify_font($font);
+$l_channel->modify_font($font);
+$l_band->modify_font($font);
+$l_locator->modify_font($font);
+
+
 $window->set_border_width(30);
 $window->set_title("Combiner");
+$window->set_default_size(656,416);
 
 $table = Gtk2::Table->new(2, 3, TRUE);
 $window->add($table);
@@ -125,6 +133,8 @@ $table->attach_defaults($l_freq, 0, 1, 0, 1);
 $table->attach_defaults($l_mode, 1, 2, 0, 1);
 $l_freq->set_alignment(1.0,0.5);
 $l_mode->set_alignment(0.1,0.5);
+my $red = Gtk2::Gdk::Color->new (0xFFFF,0,0);
+$l_freq->modify_fg('normal',$red);
 
 $table->attach_defaults($l_band, 0, 1, 1, 2);
 $table->attach_defaults($l_channel, 1, 2, 1, 2);
@@ -134,7 +144,7 @@ $l_channel->set_alignment(0.1,0.5);
 $table->attach_defaults($l_locator, 0, 2, 2, 3);
 $l_locator->set_alignment(0.0,0.5);
 
-
+my $bluel = Gtk2::Gdk::Color->new (0,0xCCCC,0xFFFF);
 $window->show_all();
  
 Gtk2->main;
