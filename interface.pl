@@ -12,6 +12,7 @@ my $real = TRUE;
 
 my $band : shared;
 my $bands : shared;
+my $channel : shared; 
 my $port=4532;
 my %rig : shared;
 my $socket;
@@ -23,9 +24,9 @@ if ($real == FALSE)
 	$rig{freq}=439325000;
 	$rig{freqformatted}="439.325.000";
 	freq_to_band();
+	freq_to_channel();
 	$rig{mode}="FM";
 	$locator="JO54el";
-	$channel="QRP";
 }
 else
 {
@@ -39,7 +40,6 @@ sub maidenhead_to_wgs () { }
 sub wgs_to_maidenhead () { }
 sub read_gps () {}
 sub calculate_distance_wgs84() {}
-sub freq_to_channel() {}
 sub get_cur_band_name() {}
 sub set_channel() {}
 sub find_nearest_channel() {}
@@ -156,11 +156,47 @@ sub read_bandplan ()
 	}
 }
 
+sub freq_to_region ()
+{
+	my $f = $rig{freq};
+	my @regions = $bands{$band}->{"region"};
+	my %r;
+	foreach my $i (0..$#regions)
+	{
+		print "$regions[$i]->{min} $f $regions[$i]->{max}\n";
+		if ($regions[$i]->{min} <= $f and $f <= $regions[$i]->{max})
+		{
+			if ($regions[$i]->{"region"})
+			{
+			} else {
+				%r = $regions[$i];
+			}
+			#print Dumper $regions[$i];
+		}
+#			print Dumper $regions[$i];
+	}
+	print Dumper %r; #@regions;
+}
+
+sub freq_to_channel ()
+{
+	my $f = $rig{freq};
+	print "Find channel for $f ";
+	my @channels = $bands{$band}->{"channels"}->{"channel"}; # repeater...
+	my %cc = %{$channels[0]};
+	for my $c (keys %cc)
+	{
+		if ($cc{$c}->{"freq"} == $f)
+		{
+			$channel = $c;
+		}
+	}
+}
 
 sub freq_to_band ()
 {
 	my $f = $rig{freq};
-	print "Find band for $f";
+	print "Find band for $f ";
 	$band ="";
 	foreach my $b (keys %bands)
 	{
