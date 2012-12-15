@@ -3,7 +3,7 @@ use IO::Socket;
 use XML::Simple;
 use Data::Dumper;
 
-$real = 0;
+$real = 1;
 
 $port=4532;
 sub init_rig ()
@@ -130,6 +130,10 @@ use Gtk2;
 use Glib;
 
 Gtk2->init;
+
+$timeout = 100;
+Glib::Timeout->add($timer, \&update_screen);
+
  
 my $window = Gtk2::Window->new;
 my $l_freq = Gtk2::Label->new($rig{freqformatted});
@@ -186,7 +190,15 @@ $l_locator->modify_fg('normal',$white);
 $window->show_all();
 $window->modify_bg("normal",$black);
 #$window->fullscreen; 
+
 Gtk2->main;
+
+sub update_screen
+{
+	if ($real == 0) { return; }
+	read_rig();
+	$l_freq->set_text($rig{freqformatted});
+}
 
 
 
