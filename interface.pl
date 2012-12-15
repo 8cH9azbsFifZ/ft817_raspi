@@ -2,8 +2,10 @@
 use IO::Socket;
 use XML::Simple;
 use Data::Dumper;
+#use threads;
+#use threads::shared;
 
-$real = 1;
+$real = FALSE;
 
 $port=4532;
 sub init_rig ()
@@ -76,7 +78,7 @@ sub signal_detected() {}
 sub watchdog() {}
 sub read_rotary () {}
 
-if ($real == 0)
+if ($real == FALSE)
 {
 	$rig{freq}=439325000;
 	$rig{freqformatted}="439.325.000";
@@ -125,14 +127,26 @@ sub read_bandplan ()
 }
 
 
+sub update_screen
+{
+	return TRUE;
+	if ($real == FALSE) {
+		$count++;
+		$l_freq->set_text("abc"); 
+	}
+	else{
+		read_rig();
+		$l_freq->set_text($rig{freqformatted});
+	}
+}
 
 use Gtk2;      
 use Glib;
 
 Gtk2->init;
 
-$timeout = 100;
-Glib::Timeout->add($timer, \&update_screen);
+$timeout = 4000;
+#$thr = threads->new(\&update_screen);
 
  
 my $window = Gtk2::Window->new;
@@ -189,16 +203,19 @@ $l_locator->modify_fg('normal',$white);
 
 $window->show_all();
 $window->modify_bg("normal",$black);
-#$window->fullscreen; 
+#$window->fullscreen;
+$count = 0;
+#Glib::Timeout->add($timer, \&update_screen);
+ Glib::Timeout->add( 1000, sub {
+		 $count++;
+                $l_freq->set_text((localtime(time))[0]);
+					 #0;
+					 return TRUE;
+        });
+
+
 
 Gtk2->main;
-
-sub update_screen
-{
-	if ($real == 0) { return; }
-	read_rig();
-	$l_freq->set_text($rig{freqformatted});
-}
-
+0;
 
 
