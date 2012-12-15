@@ -7,7 +7,12 @@ use threads::shared;
 
 $real = TRUE;
 
+my $band : shared;
+my $bands : shared;
 $port=4532;
+
+read_bandplan();
+
 sub init_rig ()
 {
 	$model=120;  #ft817
@@ -97,20 +102,24 @@ sub main_rig ()
 	{
 		print "Run main rig\n";
 		read_rig();
+		freq_to_band();
 		select(undef, undef, undef, 0.1); 
 	}
 }
 
+if ($real == TRUE)
+{
 $thr = threads->new(\&main_rig);
+}
 
 if ($real == FALSE)
 {
 	$rig{freq}=439325000;
 	$rig{freqformatted}="439.325.000";
+	freq_to_band();
 	$rig{mode}="FM";
 	$locator="JO54el";
 	$channel="QRP";
-	$band="70cm";
 }
 else
 {
@@ -119,36 +128,57 @@ else
 }
 display_text();
 
-
+use XML::Parser;
 sub read_bandplan ()
 {
 	$filename="bandplan.xml";
-	use XML::Parser;
-	my $parser = new XML::Parser( Style => 'Tree' );
-	my $tree = $parser->parsefile( $filename);
+	print "Read bandplan: $filename";
+	#$parser = new XML::Parser( Style => 'Tree' );
+	#$tree = $parser->parsefile( $filename);
 	
-	$xml = new XML::Simple;
-	$data = $xml->XMLin($filename);
+	my $xml = new XML::Simple;
+	my	$data = $xml->XMLin($filename);
 	my %B = %{$data->{band}};
-	foreach my $b (keys %B)
-	{
+	%bands = %B;
+	#foreach my $b (keys %B)
+	#{
 #		print "$B{$b}{min} $B{$b}{max} $B{$b}{name}\n";
 		#print Dumper $B{$b};
-	}
+		#}
 
 #	print Dumper $tree;
-	my $B = $tree;
+		#my $B = $tree;
+		#$bands = $tree;
 	foreach my $b (keys %B)
 	{
-		print "$b $B{$b}->{min} $B{$b}->{max}\n";
-		my $r = $B{$b}->{region};
-		print Dumper $r;
-		foreach my $c (keys %C)
+		print "===> Band:$b $B{$b}->{min} $B{$b}->{max}\n";
+		#my $r = $B{$b}->{region};
+		#print "==>";
+		#print Dumper $r[0]->{comment};
+		#print "==>";
+		#print Dumper $r;
+		#foreach my $c (keys %C)
+		#{
+		#		print $c;
+		#}
+	}
+}
+
+
+sub freq_to_band ()
+{
+	my $f = $rig{freq};
+	print "Find band for $f";
+	$band ="";
+	foreach my $b (keys %bands)
+	{
+		print "$b? ";
+		if ($bands{$b}->{min} <= $f and $f <= $bands{$b}->{max})
 		{
-			print $c;
+			$band = $b;
 		}
 	}
-
+	print " found $band\n";
 }
 
 
