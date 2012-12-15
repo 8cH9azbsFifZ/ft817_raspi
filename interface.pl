@@ -3,12 +3,14 @@ use IO::Socket;
 use XML::Simple;
 use Data::Dumper;
 
+$real = 0;
+
+$port=4532;
 sub init_rig ()
 {
 	$model=120;  #ft817
 	$speed=38400;
 	$device="/dev/tty.usbserial";
-	$port=4532;
 	$cmd="rigctld -vvvv --rig-file=$device --model=$model --serial-speed=$speed --port=$port";
 	#system("$cmd &");
 }
@@ -17,7 +19,6 @@ my %rig;
 my $socket;
 sub init_rig_socket ()
 {
-
 	# Create a socket
 	$socket = new IO::Socket::INET (
 	  PeerAddr => '127.0.0.1',
@@ -46,16 +47,19 @@ sub read_rig()
 	#print $socket "get_dcd\n";
 	#$sql_stat=<$socket>;
 	chomp $rig{$_} foreach (keys %rig);
+
+	$mhz = int($rig{freq} / 1000000);
+	$khz = int(($rig{freq} % 1000000)/1000);
+	$hz = int($rig{freq} % 1000);
+	$rig{freqformatted} = sprintf  "%03d.%03d.%03d", $mhz, $khz, $hz;
+
 }
 
 sub display_text ()
 {
 	$freq = $rig{freq} ; #in Hz
-	$mhz = int($freq / 1000000);
-	$khz = int(($freq % 1000000)/1000);
-	$hz = int($freq % 1000);
 
-	printf "%03d.%03d.%03d Hz\nMode: $rig{mode}\nChannel: $channel\nBand: $band\nLocator: $locator\n", $mhz, $khz, $hz;
+	printf "$rig{freqformatted} Hz\nMode: $rig{mode}\nChannel: $channel\nBand: $band\nLocator: $locator\n", $mhz, $khz, $hz;
 }
 
 
@@ -72,13 +76,20 @@ sub signal_detected() {}
 sub watchdog() {}
 sub read_rotary () {}
 
-
-$rig{freq}=439325000;
-$rig{mode}="FM";
-$locator="JO54el";
-$channel="QRP";
-$band="70cm";
-#read_rig();
+if ($real == 0)
+{
+	$rig{freq}=439325000;
+	$rig{freqformatted}="439.325.000";
+	$rig{mode}="FM";
+	$locator="JO54el";
+	$channel="QRP";
+	$band="70cm";
+}
+else
+{
+	init_rig_socket();
+	read_rig();
+}
 display_text();
 
 
@@ -121,7 +132,7 @@ use Glib;
 Gtk2->init;
  
 my $window = Gtk2::Window->new;
-my $l_freq = Gtk2::Label->new($rig{freq});
+my $l_freq = Gtk2::Label->new($rig{freqformatted});
 my $l_mode = Gtk2::Label->new($rig{mode});
 my $l_channel = Gtk2::Label->new($channel);
 my $l_band = Gtk2::Label->new($band);
@@ -131,7 +142,7 @@ my $button2 = Gtk2::Button->new('Button 2');
 
  
 $window->signal_connect('delete-event' => sub { Gtk2->main_quit });
-my $font     = Gtk2::Pango::FontDescription->from_string("Sans Bold 18 ");
+my $font     = Gtk2::Pango::FontDescription->from_string("Sans Bold 42 ");
 $l_freq->modify_font($font);
 $l_mode->modify_font($font);
 $l_channel->modify_font($font);
@@ -144,25 +155,36 @@ $window->set_title("Combiner");
 $window->set_default_size(656,416);
 
 $table = Gtk2::Table->new(2, 3, TRUE);
-$window->add($table);
 
-$table->attach_defaults($l_freq, 0, 1, 0, 1);
-$table->attach_defaults($l_mode, 1, 2, 0, 1);
-$l_freq->set_alignment(1.0,0.5);
-$l_mode->set_alignment(0.1,0.5);
+$hbox1 = Gtk2::HBox->new($homogenous, $spacing);
+$hbox1->pack_start($l_freq, $expand, $fill, $padding);
+$hbox1->pack_start($l_mode, $expand, $fill, $padding);
+$hbox2 = Gtk2::HBox->new($homogenous, $spacing);
+$hbox2->pack_start($l_band, $expand, $fill, $padding);
+$hbox3 = Gtk2::HBox->new($homogenous, $spacing);
+$hbox3->pack_start($l_channel, $expand, $fill, $padding);
+$hbox4 = Gtk2::HBox->new($homogenous, $spacing);
+$hbox4->pack_start($l_locator, $expand, $fill, $padding);
+
+$vbox = Gtk2::VBox->new($homogenous, $spacing);
+$vbox->pack_start($hbox1, $expand, $fill, $padding);
+$vbox->pack_start($hbox2, $expand, $fill, $padding);
+$vbox->pack_start($hbox3, $expand, $fill, $padding);
+$vbox->pack_start($hbox4, $expand, $fill, $padding);
+$window->add($vbox);
+
 my $red = Gtk2::Gdk::Color->new (0xFFFF,0,0);
-$l_freq->modify_fg('normal',$red);
-
-$table->attach_defaults($l_band, 0, 1, 1, 2);
-$table->attach_defaults($l_channel, 1, 2, 1, 2);
-$l_band->set_alignment(0.0,0.5);
-$l_channel->set_alignment(0.1,0.5);
-
-$table->attach_defaults($l_locator, 0, 2, 2, 3);
-$l_locator->set_alignment(0.0,0.5);
-
 my $bluel = Gtk2::Gdk::Color->new (0,0xCCCC,0xFFFF);
+my $black= Gtk2::Gdk::Color->new (0,0,0);
+my $white = Gtk2::Gdk::Color->new (0xFFFF,0xFFFF,0xFFFF);
+$l_freq->modify_fg('normal',$red);
+$l_mode->modify_fg('normal',$white);
+$l_band->modify_fg('normal',$white);
+$l_channel->modify_fg('normal',$white);
+$l_locator->modify_fg('normal',$white);
+
 $window->show_all();
+$window->modify_bg("normal",$black);
 #$window->fullscreen; 
 Gtk2->main;
 
