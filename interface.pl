@@ -2,10 +2,10 @@
 use IO::Socket;
 use XML::Simple;
 use Data::Dumper;
-#use threads;
-#use threads::shared;
+use threads;
+use threads::shared;
 
-$real = FALSE;
+$real = TRUE;
 
 $port=4532;
 sub init_rig ()
@@ -17,8 +17,12 @@ sub init_rig ()
 	#system("$cmd &");
 }
 
-my %rig;
+
+my %rig : shared;
 my $socket;
+
+
+
 sub init_rig_socket ()
 {
 	# Create a socket
@@ -32,15 +36,21 @@ sub init_rig_socket ()
 
 sub read_rig()
 {
+	print "Read rig: ";
+	print "Mode ";
 	print $socket "m\n";
 	$rig{mode}=<$socket>;
 	$rig{bw}=<$socket>;
+	print "Freq ";
 	print $socket "f\n";
 	$rig{freq}=<$socket>;
-	print $socket "i\n";
-	$rig{split_freq}=<$socket>;
-	print $socket "c\n";
-	$rig{ctcss_tone}=<$socket>;
+	#print "Split ";
+	#print $socket "i\n";
+	#$rig{split_freq}=<$socket>;
+	#print "CTCSS ";
+	#print $socket "c\n";
+	#$rig{ctcss_tone}=<$socket>;
+	print "RPT ";
 	print $socket "r\n";
 	$rig{rpt_shift}=<$socket>;
 	#print $socket "w \0x00\0x00\0x00\0x00\0xE7\n";
@@ -55,6 +65,7 @@ sub read_rig()
 	$hz = int($rig{freq} % 1000);
 	$rig{freqformatted} = sprintf  "%03d.%03d.%03d", $mhz, $khz, $hz;
 
+	print "\n";
 }
 
 sub display_text ()
@@ -78,6 +89,20 @@ sub signal_detected() {}
 sub watchdog() {}
 sub read_rotary () {}
 
+sub main_rig ()
+{
+	print "Main rig\n";
+	init_rig_socket();
+	while (1 == 1)
+	{
+		print "Run main rig\n";
+		read_rig();
+		select(undef, undef, undef, 0.1); 
+	}
+}
+
+$thr = threads->new(\&main_rig);
+
 if ($real == FALSE)
 {
 	$rig{freq}=439325000;
@@ -89,8 +114,8 @@ if ($real == FALSE)
 }
 else
 {
-	init_rig_socket();
-	read_rig();
+	#init_rig_socket();
+	#read_rig();
 }
 display_text();
 
@@ -146,7 +171,6 @@ use Glib;
 Gtk2->init;
 
 $timeout = 4000;
-#$thr = threads->new(\&update_screen);
 
  
 my $window = Gtk2::Window->new;
@@ -204,18 +228,23 @@ $l_locator->modify_fg('normal',$white);
 $window->show_all();
 $window->modify_bg("normal",$black);
 #$window->fullscreen;
-$count = 0;
+#$count = 0;
 #Glib::Timeout->add($timer, \&update_screen);
  Glib::Timeout->add( 1000, sub {
-		 $count++;
-                $l_freq->set_text((localtime(time))[0]);
+#		 $count++;
+#                $l_freq->set_text((localtime(time))[0]);
+#					 read_rig();
+$l_freq->set_text($rig{freqformatted});
+$l_mode->set_text($rig{mode});
+$l_band->set_text($band);
+$l_channel->set_text($channel);
 					 #0;
 					 return TRUE;
         });
 
 
 
-Gtk2->main;
+Gtk2->main; 
 0;
 
 
