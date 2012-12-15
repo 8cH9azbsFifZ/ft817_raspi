@@ -113,8 +113,6 @@ sub read_bandplan ()
 
 }
 
-read_bandplan();
-exit;
 
 
 use Gtk2;      
