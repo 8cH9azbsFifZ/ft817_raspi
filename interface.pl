@@ -2,16 +2,44 @@
 use IO::Socket;
 use XML::Simple;
 use Data::Dumper;
+use XML::Parser;
 use threads;
 use threads::shared;
+use Gtk2;      
+use Glib;
 
-$real = TRUE;
+my $real = TRUE;
 
 my $band : shared;
 my $bands : shared;
-$port=4532;
+my $port=4532;
+my %rig : shared;
+my $socket;
 
+# Initialization
 read_bandplan();
+if ($real == TRUE)
+{
+$thr = threads->new(\&main_rig);
+}
+
+if ($real == FALSE)
+{
+	$rig{freq}=439325000;
+	$rig{freqformatted}="439.325.000";
+	freq_to_band();
+	$rig{mode}="FM";
+	$locator="JO54el";
+	$channel="QRP";
+}
+else
+{
+	#init_rig_socket();
+	#read_rig();
+}
+display_text();
+
+
 
 sub init_rig ()
 {
@@ -21,12 +49,6 @@ sub init_rig ()
 	$cmd="rigctld -vvvv --rig-file=$device --model=$model --serial-speed=$speed --port=$port";
 	#system("$cmd &");
 }
-
-
-my %rig : shared;
-my $socket;
-
-
 
 sub init_rig_socket ()
 {
@@ -75,8 +97,6 @@ sub read_rig()
 
 sub display_text ()
 {
-	$freq = $rig{freq} ; #in Hz
-
 	printf "$rig{freqformatted} Hz\nMode: $rig{mode}\nChannel: $channel\nBand: $band\nLocator: $locator\n", $mhz, $khz, $hz;
 }
 
@@ -107,28 +127,7 @@ sub main_rig ()
 	}
 }
 
-if ($real == TRUE)
-{
-$thr = threads->new(\&main_rig);
-}
 
-if ($real == FALSE)
-{
-	$rig{freq}=439325000;
-	$rig{freqformatted}="439.325.000";
-	freq_to_band();
-	$rig{mode}="FM";
-	$locator="JO54el";
-	$channel="QRP";
-}
-else
-{
-	#init_rig_socket();
-	#read_rig();
-}
-display_text();
-
-use XML::Parser;
 sub read_bandplan ()
 {
 	$filename="bandplan.xml";
@@ -182,52 +181,46 @@ sub freq_to_band ()
 }
 
 
-sub update_screen
-{
-	return TRUE;
-	if ($real == FALSE) {
-		$count++;
-		$l_freq->set_text("abc"); 
-	}
-	else{
-		read_rig();
-		$l_freq->set_text($rig{freqformatted});
-	}
-}
 
-use Gtk2;      
-use Glib;
-
+# GTK Stuff
 Gtk2->init;
 
-$timeout = 4000;
+# Style definitions
+my $red = Gtk2::Gdk::Color->new (0xFFFF,0,0);
+my $bluel = Gtk2::Gdk::Color->new (0,0xCCCC,0xFFFF);
+my $black= Gtk2::Gdk::Color->new (0,0,0);
+my $white = Gtk2::Gdk::Color->new (0xFFFF,0xFFFF,0xFFFF);
+my $font     = Gtk2::Pango::FontDescription->from_string("Sans Bold 42 ");
 
- 
+# Elements
 my $window = Gtk2::Window->new;
 my $l_freq = Gtk2::Label->new($rig{freqformatted});
 my $l_mode = Gtk2::Label->new($rig{mode});
 my $l_channel = Gtk2::Label->new($channel);
 my $l_band = Gtk2::Label->new($band);
 my $l_locator = Gtk2::Label->new($locator);
-my $button1 = Gtk2::Button->new('Button 1');
-my $button2 = Gtk2::Button->new('Button 2');
-
  
-$window->signal_connect('delete-event' => sub { Gtk2->main_quit });
-my $font     = Gtk2::Pango::FontDescription->from_string("Sans Bold 42 ");
+
+# Element style
 $l_freq->modify_font($font);
 $l_mode->modify_font($font);
 $l_channel->modify_font($font);
 $l_band->modify_font($font);
 $l_locator->modify_font($font);
+$l_freq->modify_fg('normal',$red);
+$l_mode->modify_fg('normal',$white);
+$l_band->modify_fg('normal',$white);
+$l_channel->modify_fg('normal',$white);
+$l_locator->modify_fg('normal',$white);
 
-
+# Window style
 $window->set_border_width(30);
 $window->set_title("Combiner");
 $window->set_default_size(656,416);
+$window->modify_bg("normal",$black);
+#$window->fullscreen;
 
-$table = Gtk2::Table->new(2, 3, TRUE);
-
+# Organization of the elements
 $hbox1 = Gtk2::HBox->new($homogenous, $spacing);
 $hbox1->pack_start($l_freq, $expand, $fill, $padding);
 $hbox1->pack_start($l_mode, $expand, $fill, $padding);
@@ -243,23 +236,14 @@ $vbox->pack_start($hbox1, $expand, $fill, $padding);
 $vbox->pack_start($hbox2, $expand, $fill, $padding);
 $vbox->pack_start($hbox3, $expand, $fill, $padding);
 $vbox->pack_start($hbox4, $expand, $fill, $padding);
+
 $window->add($vbox);
 
-my $red = Gtk2::Gdk::Color->new (0xFFFF,0,0);
-my $bluel = Gtk2::Gdk::Color->new (0,0xCCCC,0xFFFF);
-my $black= Gtk2::Gdk::Color->new (0,0,0);
-my $white = Gtk2::Gdk::Color->new (0xFFFF,0xFFFF,0xFFFF);
-$l_freq->modify_fg('normal',$red);
-$l_mode->modify_fg('normal',$white);
-$l_band->modify_fg('normal',$white);
-$l_channel->modify_fg('normal',$white);
-$l_locator->modify_fg('normal',$white);
-
 $window->show_all();
-$window->modify_bg("normal",$black);
-#$window->fullscreen;
-#$count = 0;
+
 #Glib::Timeout->add($timer, \&update_screen);
+
+$window->signal_connect('delete-event' => sub { Gtk2->main_quit });
  Glib::Timeout->add( 1000, sub {
 #		 $count++;
 #                $l_freq->set_text((localtime(time))[0]);
@@ -271,8 +255,6 @@ $l_channel->set_text($channel);
 					 #0;
 					 return TRUE;
         });
-
-
 
 Gtk2->main; 
 0;
