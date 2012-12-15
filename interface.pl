@@ -116,6 +116,7 @@ sub main_rig ()
 		print "Run main rig\n";
 		read_rig();
 		freq_to_band();
+		freq_to_channel();
 		select(undef, undef, undef, 0.05); 
 	}
 }
@@ -182,6 +183,7 @@ sub freq_to_channel ()
 {
 	my $f = $rig{freq};
 	print "Find channel for $f ";
+	$channel = "";
 	my @channels = $bands{$band}->{"channels"}->{"channel"}; # repeater...
 	my %cc = %{$channels[0]};
 	for my $c (keys %cc)
