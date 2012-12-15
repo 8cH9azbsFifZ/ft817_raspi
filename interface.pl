@@ -18,11 +18,6 @@ my $socket;
 
 # Initialization
 read_bandplan();
-if ($real == TRUE)
-{
-$thr = threads->new(\&main_rig);
-}
-
 if ($real == FALSE)
 {
 	$rig{freq}=439325000;
@@ -34,12 +29,23 @@ if ($real == FALSE)
 }
 else
 {
-	#init_rig_socket();
-	#read_rig();
+	$thr = threads->new(\&main_rig);
 }
 display_text();
 
 
+# Function definition
+sub maidenhead_to_wgs () { }
+sub wgs_to_maidenhead () { }
+sub read_gps () {}
+sub calculate_distance_wgs84() {}
+sub freq_to_channel() {}
+sub get_cur_band_name() {}
+sub set_channel() {}
+sub find_nearest_channel() {}
+sub signal_detected() {}
+sub watchdog() {}
+sub read_rotary () {}
 
 sub init_rig ()
 {
@@ -85,7 +91,7 @@ sub read_rig()
 	#$level=<$socket>;
 	#print $socket "get_dcd\n";
 	#$sql_stat=<$socket>;
-	chomp $rig{$_} foreach (keys %rig);
+	$rig{$_} =~ s/\R//g foreach (keys %rig);
 
 	$mhz = int($rig{freq} / 1000000);
 	$khz = int(($rig{freq} % 1000000)/1000);
@@ -101,19 +107,6 @@ sub display_text ()
 }
 
 
-
-sub maidenhead_to_wgs () { }
-sub wgs_to_maidenhead () { }
-sub read_gps () {}
-sub calculate_distance_wgs84() {}
-sub freq_to_channel() {}
-sub get_cur_band_name() {}
-sub set_channel() {}
-sub find_nearest_channel() {}
-sub signal_detected() {}
-sub watchdog() {}
-sub read_rotary () {}
-
 sub main_rig ()
 {
 	print "Main rig\n";
@@ -123,7 +116,7 @@ sub main_rig ()
 		print "Run main rig\n";
 		read_rig();
 		freq_to_band();
-		select(undef, undef, undef, 0.1); 
+		select(undef, undef, undef, 0.05); 
 	}
 }
 
@@ -179,7 +172,6 @@ sub freq_to_band ()
 	}
 	print " found $band\n";
 }
-
 
 
 # GTK Stuff
