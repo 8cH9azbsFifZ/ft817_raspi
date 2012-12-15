@@ -55,7 +55,7 @@ sub display_text ()
 	$khz = int(($freq % 1000000)/1000);
 	$hz = int($freq % 1000);
 
-	printf "%03d.%03d.%03d Hz\nMode: $rig{mode}\nChannel: $channel\nBand: $band\nLocator: $locator", $mhz, $khz, $hz;
+	printf "%03d.%03d.%03d Hz\nMode: $rig{mode}\nChannel: $channel\nBand: $band\nLocator: $locator\n", $mhz, $khz, $hz;
 }
 
 
@@ -85,17 +85,36 @@ display_text();
 sub read_bandplan ()
 {
 	$filename="bandplan.xml";
+	use XML::Parser;
+	my $parser = new XML::Parser( Style => 'Tree' );
+	my $tree = $parser->parsefile( $filename);
+	
 	$xml = new XML::Simple;
 	$data = $xml->XMLin($filename);
 	my %B = %{$data->{band}};
 	foreach my $b (keys %B)
 	{
-		print "$B{$b}{min} $B{$b}{max} $B{$b}{name}\n";
-		print Dumper $B{$b};
+#		print "$B{$b}{min} $B{$b}{max} $B{$b}{name}\n";
+		#print Dumper $B{$b};
 	}
+
+#	print Dumper $tree;
+	my $B = $tree;
+	foreach my $b (keys %B)
+	{
+		print "$b $B{$b}->{min} $B{$b}->{max}\n";
+		my $r = $B{$b}->{region};
+		print Dumper $r;
+		foreach my $c (keys %C)
+		{
+			print $c;
+		}
+	}
+
 }
 
-
+read_bandplan();
+exit;
 
 
 use Gtk2;      
