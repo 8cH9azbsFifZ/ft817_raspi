@@ -14,24 +14,25 @@ my $band : shared;
 my $bands : shared;
 my $channel : shared; 
 my $port=4532;
+my $machine = "192.168.1.68";
 my %rig : shared;
 my $socket;
 
 # Initialization
 read_bandplan();
-if ($real == FALSE)
-{
-	$rig{freq}=439325000;
-	$rig{freqformatted}="439.325.000";
-	freq_to_band();
-	freq_to_channel();
-	$rig{mode}="FM";
-	$locator="JO54el";
-}
-else
-{
+#if ($real == FALSE)
+#{
+#	$rig{freq}=439325000;
+#	$rig{freqformatted}="439.325.000";
+#	freq_to_band();
+#	freq_to_channel();
+#	$rig{mode}="FM";
+#	$locator="JO54el";
+#}
+#else
+#{
 	$thr = threads->new(\&main_rig);
-}
+#}
 display_text();
 
 
@@ -60,7 +61,7 @@ sub init_rig_socket ()
 {
 	# Create a socket
 	$socket = new IO::Socket::INET (
-	  PeerAddr => '127.0.0.1',
+	  PeerAddr => $machine,
 	  PeerPort => $port,
 	  Proto => 'tcp',
 	);
