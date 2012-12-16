@@ -8,8 +8,6 @@ use threads::shared;
 use Gtk2;      
 use Glib;
 
-my $real = TRUE;
-
 my $band : shared;
 my $bands : shared;
 my $channel : shared; 
@@ -20,19 +18,7 @@ my $socket;
 
 # Initialization
 read_bandplan();
-#if ($real == FALSE)
-#{
-#	$rig{freq}=439325000;
-#	$rig{freqformatted}="439.325.000";
-#	freq_to_band();
-#	freq_to_channel();
-#	$rig{mode}="FM";
-#	$locator="JO54el";
-#}
-#else
-#{
-	$thr = threads->new(\&main_rig);
-#}
+$thr = threads->new(\&main_rig);
 display_text();
 
 
@@ -53,7 +39,7 @@ sub init_rig ()
 	$model=120;  #ft817
 	$speed=38400;
 	$device="/dev/tty.usbserial";
-	$cmd="rigctld -vvvv --rig-file=$device --model=$model --serial-speed=$speed --port=$port";
+	$cmd="rigctld -vvvv --rig-file=$device --model=$model --serial-speed=$speed --port=$port --listen-addr=$machine";
 	#system("$cmd &");
 }
 
