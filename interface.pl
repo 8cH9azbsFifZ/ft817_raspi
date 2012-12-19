@@ -1,4 +1,24 @@
 #!/usr/bin/perl -I/opt/local/lib/perl5//vendor_perl/5.12.4/darwin-thread-multi-2level/
+# This file is part of the Raspberry Pi Yaesu FT 817 Controller (ft817_raspi).
+#
+# ft817_raspi is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ft817_raspi is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with ft817_raspi.  If not, see http://www.gnu.org/licenses/;.	  
+#	 
+#	 
+# Contributing Authors:
+#	Gerolf Ziegenhain, DG6FL
+#
+
 use IO::Socket;
 use XML::Simple;
 use Data::Dumper;
