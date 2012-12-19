@@ -8,21 +8,28 @@ use threads::shared;
 use Gtk2;      
 use Glib;
 
+##########################################################################
+##########################################################################
+##########################################################################
+
+# Configuration of the code
+my $port=4532;
+my $machine = "192.168.1.68";
+
+# Global Variables
 my $band : shared;
 my $bands : shared;
 my $channel : shared; 
-my $port=4532;
-my $machine = "192.168.1.68";
 my %rig : shared;
 my $socket;
 
-# Initialization
-read_bandplan();
-$thr = threads->new(\&main_rig);
-display_text();
 
 
+##########################################################################
+##########################################################################
+##########################################################################
 # Function definition
+
 sub maidenhead_to_wgs () { }
 sub wgs_to_maidenhead () { }
 sub read_gps () {}
@@ -34,15 +41,18 @@ sub signal_detected() {}
 sub watchdog() {}
 sub read_rotary () {}
 
+# Initialize the Hamlib backend
 sub init_rig ()
 {
 	$model=120;  #ft817
 	$speed=38400;
 	$device="/dev/tty.usbserial";
 	$cmd="rigctld -vvvv --rig-file=$device --model=$model --serial-speed=$speed --port=$port --listen-addr=$machine";
+	print $cmd;
 	#system("$cmd &");
 }
 
+# Initialize the socket for accessing the Hamlib backend
 sub init_rig_socket ()
 {
 	# Create a socket
@@ -54,6 +64,7 @@ sub init_rig_socket ()
 	$socket or die "no socket";
 }
 
+# Read all neccessary variables from the rig
 sub read_rig()
 {
 	print "Read rig: ";
@@ -79,6 +90,8 @@ sub read_rig()
 	#print $socket "get_dcd\n";
 	#$sql_stat=<$socket>;
 	$rig{$_} =~ s/\R//g foreach (keys %rig);
+	$rig{$_} =~ s/\r//g foreach (keys %rig);
+	$rig{$_} =~ s/\n//g foreach (keys %rig);
 
 	$mhz = int($rig{freq} / 1000000);
 	$khz = int(($rig{freq} % 1000000)/1000);
@@ -88,12 +101,13 @@ sub read_rig()
 	print "\n";
 }
 
+# Display all neccessary variables of the rig on the console
 sub display_text ()
 {
 	printf "$rig{freqformatted} Hz\nMode: $rig{mode}\nChannel: $channel\nBand: $band\nLocator: $locator\n", $mhz, $khz, $hz;
 }
 
-
+# Main loop for controlling the rig
 sub main_rig ()
 {
 	print "Main rig\n";
@@ -108,7 +122,7 @@ sub main_rig ()
 	}
 }
 
-
+# Read the bandplan.xml definitions
 sub read_bandplan ()
 {
 	$filename="bandplan.xml";
@@ -144,6 +158,7 @@ sub read_bandplan ()
 	}
 }
 
+# Convert the current rig frequency to a region name
 sub freq_to_region ()
 {
 	my $f = $rig{freq};
@@ -166,6 +181,7 @@ sub freq_to_region ()
 	print Dumper %r; #@regions;
 }
 
+# Convert the current rig frequency to a channel name
 sub freq_to_channel ()
 {
 	my $f = $rig{freq};
@@ -182,6 +198,7 @@ sub freq_to_channel ()
 	}
 }
 
+# Convert the current rig frequency to a band name
 sub freq_to_band ()
 {
 	my $f = $rig{freq};
@@ -198,8 +215,21 @@ sub freq_to_band ()
 	print " found $band\n";
 }
 
+##########################################################################
+##########################################################################
+##########################################################################
+# This is the actual code 
+read_bandplan();
+$thr = threads->new(\&main_rig);
+display_text();
 
-# GTK Stuff
+
+
+##########################################################################
+##########################################################################
+##########################################################################
+# GTK Interface follows :)
+
 Gtk2->init;
 
 # Style definitions
@@ -258,6 +288,7 @@ $window->add($vbox);
 
 $window->show_all();
 
+# Updates of the Interface
 #Glib::Timeout->add($timer, \&update_screen);
 
 $window->signal_connect('delete-event' => sub { Gtk2->main_quit });
