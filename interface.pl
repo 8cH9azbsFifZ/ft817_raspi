@@ -68,20 +68,15 @@ sub init_rig_socket ()
 sub read_rig()
 {
 	print "Read rig: ";
-	print "Mode ";
 	print $socket "m\n";
 	$rig{mode}=<$socket>;
 	$rig{bw}=<$socket>;
-	print "Freq ";
 	print $socket "f\n";
 	$rig{freq}=<$socket>;
-	#print "Split ";
 	#print $socket "i\n";
 	#$rig{split_freq}=<$socket>;
-	#print "CTCSS ";
 	#print $socket "c\n";
 	#$rig{ctcss_tone}=<$socket>;
-	print "RPT ";
 	print $socket "r\n";
 	$rig{rpt_shift}=<$socket>;
 	#print $socket "w \0x00\0x00\0x00\0x00\0xE7\n";
@@ -89,6 +84,15 @@ sub read_rig()
 	#$level=<$socket>;
 	#print $socket "get_dcd\n";
 	#$sql_stat=<$socket>;
+	print $socket "l STRENGTH\n";
+	$rig{strength}=<$socket>;
+
+	#working commands
+	# found using: echo "t" | nc -w 1 192.168.1.68 4532
+	# get_ptto
+	# --dump-caps|
+	# Get level: RFPOWER(0..0/0) RAWSTR(0..0/0) STRENGTH(0..0/0) 
+	# 
 	$rig{$_} =~ s/\R//g foreach (keys %rig);
 	$rig{$_} =~ s/\r//g foreach (keys %rig);
 	$rig{$_} =~ s/\n//g foreach (keys %rig);
@@ -111,6 +115,7 @@ sub display_text ()
 sub main_rig ()
 {
 	print "Main rig\n";
+	my $update_delay = 0.1;
 	init_rig_socket();
 	while (1 == 1)
 	{
@@ -118,7 +123,7 @@ sub main_rig ()
 		read_rig();
 		freq_to_band();
 		freq_to_channel();
-		select(undef, undef, undef, 0.05); 
+		select(undef, undef, undef, $update_delay); 
 	}
 }
 
@@ -243,6 +248,7 @@ my $font     = Gtk2::Pango::FontDescription->from_string("Sans Bold 42 ");
 my $window = Gtk2::Window->new;
 my $l_freq = Gtk2::Label->new($rig{freqformatted});
 my $l_mode = Gtk2::Label->new($rig{mode});
+my $l_strength = Gtk2::Label->new($rig{strength});
 my $l_channel = Gtk2::Label->new($channel);
 my $l_band = Gtk2::Label->new($band);
 my $l_locator = Gtk2::Label->new($locator);
@@ -251,11 +257,14 @@ my $l_locator = Gtk2::Label->new($locator);
 # Element style
 $l_freq->modify_font($font);
 $l_mode->modify_font($font);
+$l_strength->modify_font($font);
 $l_channel->modify_font($font);
 $l_band->modify_font($font);
 $l_locator->modify_font($font);
+
 $l_freq->modify_fg('normal',$red);
 $l_mode->modify_fg('normal',$white);
+$l_strength->modify_fg('normal',$white);
 $l_band->modify_fg('normal',$white);
 $l_channel->modify_fg('normal',$white);
 $l_locator->modify_fg('normal',$white);
@@ -271,6 +280,7 @@ $window->modify_bg("normal",$black);
 $hbox1 = Gtk2::HBox->new($homogenous, $spacing);
 $hbox1->pack_start($l_freq, $expand, $fill, $padding);
 $hbox1->pack_start($l_mode, $expand, $fill, $padding);
+$hbox1->pack_start($l_strength, $expand, $fill, $padding);
 $hbox2 = Gtk2::HBox->new($homogenous, $spacing);
 $hbox2->pack_start($l_band, $expand, $fill, $padding);
 $hbox3 = Gtk2::HBox->new($homogenous, $spacing);
@@ -298,6 +308,7 @@ $window->signal_connect('delete-event' => sub { Gtk2->main_quit });
 #					 read_rig();
 $l_freq->set_text($rig{freqformatted});
 $l_mode->set_text($rig{mode});
+$l_strength->set_text($rig{strength});
 $l_band->set_text($band);
 $l_channel->set_text($channel);
 					 #0;
